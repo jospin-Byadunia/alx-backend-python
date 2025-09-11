@@ -1,9 +1,7 @@
 import sqlite3 
 import functools
 
-"""your code goes here"""
 def with_db_connection(func):
-    """ your code goes here""" 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         connection = sqlite3.connect('users.db')
