@@ -2,8 +2,7 @@ import time
 import sqlite3 
 import functools
 
-#### paste your with_db_decorator here
-
+#### decorator to manage database connection
 def with_db_connection(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
@@ -27,6 +26,8 @@ def retry_on_failure(retries, delay, func):
                 time.sleep(delay)
         raise last_exception
     return wrapper
+
+#### fetch users with automatic retry on failure
 @with_db_connection
 @retry_on_failure(retries=3, delay=1)
 
