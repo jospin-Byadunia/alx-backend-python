@@ -19,3 +19,27 @@ class ExecuteQuery:
             print(f"Error: {exc_val}")
         self.cursor.close()
         self.connection.close()
+
+
+# Example usage:
+# Setup: create a users table and add some data
+with sqlite3.connect("mydb.sqlite") as conn:
+    cur = conn.cursor()
+    cur.execute("DROP TABLE IF EXISTS users")
+    cur.execute("CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER)")
+    cur.executemany("INSERT INTO users (name, age) VALUES (?, ?)", [
+        ("Alice", 22),
+        ("Bob", 30),
+        ("Charlie", 28),
+        ("Diana", 24),
+    ])
+    conn.commit()
+
+# Use ExecuteQuery to run SELECT with parameter
+query = "SELECT * FROM users WHERE age > ?"
+param = (25,)
+
+with ExecuteQuery("mydb.sqlite", query, param) as results:
+    print("Users older than 25:")
+    for row in results:
+        print(row)
