@@ -14,10 +14,6 @@ from parameterized import parameterized
 from utils import access_nested_map, get_json, memoize
 from unittest.mock import patch, Mock
 
-# nested_map={"a": 1}, path=("a",)
-# nested_map={"a": {"b": 2}}, path=("a",)
-# nested_map={"a": {"b": 2}}, path=("a", "b")
-
 
 # TestAccessNestedMap
 # Test the access_nested_map function
@@ -90,7 +86,6 @@ class TestMemoize(unittest.TestCase):
                           return_value=42) as mock_method:
             obj = TestClass()
 
-            # Call a_property twice
             result1 = obj.a_property
             result2 = obj.a_property
 
