@@ -1,30 +1,34 @@
 from django.db import models
 import uuid
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class User(AbstractUser):
-    """Custom user model extending Django's AbstractUser."""
-
-    # override username field requirement
-    username = None  
-
     user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True, null=False)
-
-    # extra fields
-    phone_number = models.CharField(max_length=20, null=True, blank=True)
-
-    ROLE_CHOICES = [
-        ("guest", "Guest"),
-        ("host", "Host"),
-        ("admin", "Admin"),
-    ]
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default="guest")
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = ["first_name", "last_name"]
+    phone_number = models.CharField(max_length=20, null=True)
+    role = models.CharField(
+        max_length=10,
+        choices=[('guest', 'Guest'), ('host', 'Host'), ('admin', 'Admin')],
+        default='guest'
+    )
+    
+    # override to avoid reverse accessor clash
+    groups = models.ManyToManyField(
+        Group,
+        related_name="custom_user_set",  # custom name to avoid conflict
+        blank=True,
+        help_text='The groups this user belongs to.',
+        verbose_name='groups'
+    )
+    
+    user_permissions = models.ManyToManyField(
+        Permission,
+        related_name="custom_user_set_permissions",  # custom name to avoid conflict
+        blank=True,
+        help_text='Specific permissions for this user.',
+        verbose_name='user permissions'
+    )
+    
+    REQUIRED_FIELDS = ['email', 'first_name', 'last_name']
     @property
     def password(self):
         return self.password  # already exists in AbstractUser
