@@ -91,16 +91,14 @@ def requests_get(*args, **kwargs):
       TEST_PAYLOAD[0][3])]
 )
 class TestIntegrationGithubOrgClient(unittest.TestCase):
-    """
-    Integration test for the GithubOrgClient.public_repos method
-    """
+    """Integration tests for GithubOrgClient"""
+
     @classmethod
     def setUpClass(cls):
-        """Set up patcher for requests.get"""
-        cls.get_patcher = patch('client.requests.get',
-                                side_effect=requests_get)
+        """Set up patcher for utils.requests.get"""
+        cls.get_patcher = patch("utils.requests.get", side_effect=requests_get)
         cls.mock_get = cls.get_patcher.start()
-        cls.client = GithubOrgClient('google')
+        cls.client = GithubOrgClient("google")
 
     @classmethod
     def tearDownClass(cls):
@@ -108,11 +106,11 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
         cls.get_patcher.stop()
 
     def test_public_repos(self):
-        """Test public_repos method without license."""
+        """Test public_repos without license filter"""
         self.assertEqual(self.client.public_repos(), self.expected_repos)
 
     def test_public_repos_with_license(self):
-        """Test public_repos method with license."""
+        """Test public_repos with license filter"""
         self.assertEqual(
             self.client.public_repos(license="apache-2.0"),
             self.apache2_repos
