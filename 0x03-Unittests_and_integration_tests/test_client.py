@@ -94,16 +94,16 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     """Integration tests for GithubOrgClient"""
 
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(self):
         """Set up patcher for utils.requests.get"""
-        cls.get_patcher = patch("utils.requests.get", side_effect=requests_get)
-        cls.mock_get = cls.get_patcher.start()
-        cls.client = GithubOrgClient("google")
+        self.get_patcher = patch("utils.requests.get", side_effect=requests_get)
+        self.mock_get = self.get_patcher.start()
+        self.client = GithubOrgClient("google")
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(self):
         """Stop patcher"""
-        cls.get_patcher.stop()
+        self.get_patcher.stop()
 
     def test_public_repos(self):
         """Test public_repos without license filter"""
