@@ -10,6 +10,10 @@ from unittest.mock import patch, Mock
 # nested_map={"a": {"b": 2}}, path=("a", "b")
 
 
+# TestAccessNestedMap
+# Test the access_nested_map function
+
+
 class TestAccessNestedMap(unittest.TestCase):
     @parameterized.expand([
         ({"a": 1}, ("a",), 1),
@@ -28,6 +32,10 @@ class TestAccessNestedMap(unittest.TestCase):
             access_nested_map(nested_map, path)
         self.assertEqual(str(cm.exception), repr(path[-1]))
 
+# TestGetJson
+# Test the get_json function
+# - Use the parameterized.expand decorator to parametrize test cases
+
 
 class TestGetJson(unittest.TestCase):
     @parameterized.expand([
@@ -43,6 +51,11 @@ class TestGetJson(unittest.TestCase):
 
         mock_get.assert_called_once_with(test_url)
         self.assertEqual(result, test_payload)
+
+# TestMemoize
+# Test the memoize decorator
+# - Create a class with a method that returns a constant value
+# - Decorate a property with the memoize decorator that calls the method
 
 
 class TestMemoize(unittest.TestCase):
