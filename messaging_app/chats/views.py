@@ -1,24 +1,22 @@
-from django.shortcuts import render
-from rest_framework import viewsets, status
-from rest_framework.response import Response
+from rest_framework import viewsets, status, filters
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.decorators import action
+from rest_framework.response import Response
 from .models import Conversation, Message, User
-from .serializers import ConversationSerializer, MessageSerializer, UserSerializer
+from .serializers import ConversationSerializer, MessageSerializer
 
-# ----------------------------
-# Conversation ViewSet
-# ----------------------------
 class ConversationViewSet(viewsets.ModelViewSet):
     """
-    Handles listing conversations and creating new conversations.
+    ViewSet for listing and creating conversations.
     """
     queryset = Conversation.objects.all().prefetch_related('participants', 'messages')
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated]
 
+    # Adding filtering capability
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['participants__first_name', 'participants__last_name', 'participants__email']
+
     def create(self, request, *args, **kwargs):
-        # Expecting participants list (user ids)
         participants_ids = request.data.get('participants', [])
         if not participants_ids or len(participants_ids) < 2:
             return Response(
@@ -32,16 +30,16 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# ----------------------------
-# Message ViewSet
-# ----------------------------
 class MessageViewSet(viewsets.ModelViewSet):
     """
-    Handles listing messages and sending new messages in a conversation.
+    ViewSet for listing messages and sending messages.
     """
     queryset = Message.objects.all().select_related('sender', 'conversation')
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated]
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['message_body']
 
     def create(self, request, *args, **kwargs):
         sender = request.user
