@@ -72,12 +72,13 @@ class TestMemoize(unittest.TestCase):
     """Tests for memoize decorator."""
 
     def test_memoize(self):
+        """Test that memoize calls the wrapped method only once."""
         class TestClass:
-            """Test class for memoize decorator."""
+            """Helper class for testing memoize."""
 
             def a_method(self):
                 return 42
-
+            """Return 42."""
             @memoize
             def a_property(self):
                 """Memoized property that calls a_method."""
