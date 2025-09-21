@@ -47,7 +47,6 @@ class TestGithubOrgClient(unittest.TestCase):
                           ) as m:
             client = GithubOrgClient("alx")
             repos = client.public_repos()
-            print(repos)
             self.assertEqual(repos, ['repo1', 'repo2'])
             smada.assert_called_once_with('https://api.github.com/myorg/repos')
             m.assert_called_once()
