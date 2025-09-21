@@ -97,7 +97,7 @@ class TestIntegrationGithubOrgClient(unittest.TestCase):
     def setUpClass(self):
         """Set up patcher for utils.requests.get"""
         self.get_patcher = patch("utils.requests.get",
-        side_effect=requests_get)
+                                side_effect=requests_get)
         self.mock_get = self.get_patcher.start()
         self.client = GithubOrgClient("google")
 
