@@ -1,55 +1,69 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, filters
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.decorators import action
-from django.shortcuts import get_object_or_404
-from .models import User, Conversation, Message
+from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
-
 
 class ConversationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for listing and creating conversations.
     """
-    queryset = Conversation.objects.all()
+    queryset = Conversation.objects.all().prefetch_related('participants', 'messages')
     serializer_class = ConversationSerializer
+    permission_classes = [IsAuthenticated]
+
+    # Adding filtering capability
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['participants__first_name', 'participants__last_name', 'participants__email']
 
     def create(self, request, *args, **kwargs):
-        """
-        Create a new conversation with participants.
-        """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        conversation = serializer.save()
-        return Response(self.get_serializer(conversation).data, status=status.HTTP_201_CREATED)
+        participants_ids = request.data.get('participants', [])
+        if not participants_ids or len(participants_ids) < 2:
+            return Response(
+                {"error": "A conversation must have at least 2 participants."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        participants = User.objects.filter(id__in=participants_ids)
+        conversation = Conversation.objects.create()
+        conversation.participants.set(participants)
+        serializer = self.get_serializer(conversation)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
 class MessageViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for listing messages and sending a message to a conversation.
+    ViewSet for listing messages and sending messages.
     """
-    queryset = Message.objects.all()
+    queryset = Message.objects.all().select_related('sender', 'conversation')
     serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated]
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['message_body']
 
     def create(self, request, *args, **kwargs):
-        """
-        Send a new message to an existing conversation.
-        Expects: {
-            "conversation": conversation_id,
-            "sender": user_id,
-            "message_body": "Hello"
-        }
-        """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        message = serializer.save()
-        return Response(self.get_serializer(message).data, status=status.HTTP_201_CREATED)
+        sender = request.user
+        conversation_id = request.data.get('conversation')
+        message_body = request.data.get('message_body')
 
-    def get_queryset(self):
-        """
-        Optionally filter messages by conversation_id via query params.
-        """
-        queryset = super().get_queryset()
-        conversation_id = self.request.query_params.get("conversation_id")
-        if conversation_id:
-            queryset = queryset.filter(conversation_id=conversation_id)
-        return queryset
+        if not conversation_id or not message_body:
+            return Response(
+                {"error": "conversation and message_body are required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response(
+                {"error": "Conversation does not exist"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        message = Message.objects.create(
+            sender=sender,
+            conversation=conversation,
+            message_body=message_body
+        )
+        serializer = self.get_serializer(message)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
