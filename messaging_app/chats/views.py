@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
+from django.shortcuts import get_object_or_404
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -36,9 +37,6 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 
 class MessageViewSet(viewsets.ModelViewSet):
-    """
-    ViewSet for listing messages and sending messages.
-    """
     queryset = Message.objects.all().select_related('sender', 'conversation')
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
@@ -46,39 +44,18 @@ class MessageViewSet(viewsets.ModelViewSet):
     search_fields = ['message_body']
 
     def get_queryset(self):
-        # Restrict list to messages in conversations the user participates in
-        return self.queryset.filter(conversation__participants=self.request.user)
+        # Restrict messages to only those in conversations where the user is a participant
+        return Message.objects.filter(conversation__participants=self.request.user)
 
-    def create(self, request, *args, **kwargs):
-        sender = request.user
-        conversation_id = request.data.get('conversation')
-        message_body = request.data.get('message_body')
+    def perform_create(self, serializer):
+        conversation_id = self.request.data.get("conversation")
+        conversation = get_object_or_404(Conversation, id=conversation_id)
 
-        if not conversation_id or not message_body:
+        # Ensure only participants can send messages
+        if not conversation.participants.filter(id=self.request.user.id).exists():
             return Response(
-                {"error": "conversation and message_body are required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        try:
-            conversation = Conversation.objects.get(id=conversation_id)
-        except Conversation.DoesNotExist:
-            return Response(
-                {"error": "Conversation does not exist"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Check if sender is a participant in the conversation
-        if sender not in conversation.participants.all():
-            return Response(
-                {"error": "You are not a participant in this conversation."},
+                {"error": "You are not a participant of this conversation."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        message = Message.objects.create(
-            sender=sender,
-            conversation=conversation,
-            message_body=message_body
-        )
-        serializer = self.get_serializer(message)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer.save(sender=self.request.user, conversation=conversation)
