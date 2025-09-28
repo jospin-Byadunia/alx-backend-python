@@ -1,7 +1,7 @@
 import logging
-
-logger = logging.getLogger(__name__)
 from datetime import datetime
+
+logger = logging.getLogger("request_logger")
 
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
