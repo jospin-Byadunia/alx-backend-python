@@ -154,7 +154,7 @@ LOGGING = {
         'request_file': {
             'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'chats/request.log'),
+            'filename': os.path.join(BASE_DIR, 'chats/requests.log'),
             'formatter': 'verbose',
         },
     },
